@@ -258,37 +258,36 @@ than the minor_semiaxis'
     return height, latitude, longitude
 
 
-def GCC2TCC(X, Y, Z, X_P, Y_P, Z_P, latitude_P, longitude_P):
+def GCC2TCC(X, Y, Z, X0, Y0, Z0, latitude_0, longitude_0):
     '''
-    Convert GCC into TCC with origin at a point P. The point P has
-    latitude and longitude given by latitude_P and longitude_P, respectively.
-    This TCS has axis x pointing to north, axis z
+    Convert GCC into TCC with origin at a point Q = (X0, Y0, Z0). The point Q
+    has latitude and longitude given by latitude_0 and longitude_0,
+    respectively. This TCS has axis x pointing to north, axis z
     pointing to the inward normal and axis y completing the right-handed
-    system. If latitude_P is geodetic, then the computed normal is defined with
-    respect to the referrence elipsoid. If latitude_P is spherical, then the
+    system. If latitude_0 is geodetic, then the computed normal is defined with
+    respect to the referrence elipsoid. If latitude_0 is spherical, then the
     normal is defined with respect to a sphere.
     The transformation is computed as follows:
 
-    x =  vX*(X - X_P) + vY*(Y - Y_P) + vZ*(Z - Z_P)
-    y =  wX*(X - X_P) + wY*(Y - Y_P)
-    z = -uX*(X - X_P) - uY*(Y - Y_P) - uZ*(Z - Z_P)
+    x =  vX*(X - X0) + vY*(Y - Y0) + vZ*(Z - Z0)
+    y =  wX*(X - X0) + wY*(Y - Y0)
+    z = -uX*(X - X0) - uY*(Y - Y0) - uZ*(Z - Z0)
 
     where uX, uY, uZ, vX, vY, vZ, wX, and wy are components of the unit vectors
     (referred to the GCS) pointing to the orthogonal directions of the GGS
-    at the point P, X_P, Y_P and Z_P are the coordinates of the origin in the
-    GCS and X, Y and Z are the coordinates of the points in the GCS.
+    at the point Q.
 
     Parameters:
     -----------
     X, Y, Z: numpy arrays 1D
         Vectors containing the coordinates x, y and z (in meters), respectively,
         of the points referred to the GCS.
-    X_P, Y_P, Z_P: floats
+    X0, Y0, Z0: floats
         Coordinates of the origin in the GCS.
-    latitude_P: float
-        Latitude (in degrees) of the origin P.
-    longitude_P: float
-        Longitude (in degrees) of the origin P.
+    latitude_0: float
+        Latitude (in degrees) of the origin Q.
+    longitude_0: float
+        Longitude (in degrees) of the origin Q.
 
     Returns:
     --------
@@ -306,24 +305,24 @@ def GCC2TCC(X, Y, Z, X_P, Y_P, Z_P, latitude_P, longitude_P):
 
     assert (X.shape == Y.shape == Z.shape), 'X, Y and Z must have the same \
 shape'
-    assert np.isscalar(X_P), 'X_P must be a scalar'
-    assert np.isscalar(Y_P), 'Y_P must be a scalar'
-    assert np.isscalar(Z_P), 'Z_P must be a scalar'
-    assert np.isscalar(latitude_P), 'latitude_P must be a scalar'
-    assert np.isscalar(longitude_P), 'longitude_P must be a scalar'
+    assert np.isscalar(X0), 'X0 must be a scalar'
+    assert np.isscalar(Y0), 'Y0 must be a scalar'
+    assert np.isscalar(Z0), 'Z0 must be a scalar'
+    assert np.isscalar(latitude_0), 'latitude_0 must be a scalar'
+    assert np.isscalar(longitude_0), 'longitude_0 must be a scalar'
 
     # Differences in Geocentric Cartesian Coordinates
-    DX = X - X_P
-    DY = Y - Y_P
-    DZ = Z - Z_P
+    DX = X - X0
+    DY = Y - Y0
+    DZ = Z - Z0
 
     # Unit vectors pointing to the orthogonal directions of the
-    # Geocentric Geodetic System at the origin P
-    uX, uY, uZ = unit_vector_normal(latitude_P, longitude_P)
-    vX, vY, vZ = unit_vector_latitude(latitude_P, longitude_P)
-    wX, wY = unit_vector_longitude(longitude_P)
+    # Geocentric Geodetic System at the origin Q
+    uX, uY, uZ = unit_vector_normal(latitude_0, longitude_0)
+    vX, vY, vZ = unit_vector_latitude(latitude_0, longitude_0)
+    wX, wY = unit_vector_longitude(longitude_0)
 
-    # Coordinates in the Topocentric Cartesian System with origin at P
+    # Coordinates in the Topocentric Cartesian System with origin at Q
     x =  vX*DX + vY*DY + vZ*DZ
     y =  wX*DX + wY*DY
     z = -uX*DX - uY*DY - uZ*DZ
@@ -331,37 +330,36 @@ shape'
     return x, y, z
 
 
-def TCC2GCC(x, y, z, X_P, Y_P, Z_P, latitude_P, longitude_P):
+def TCC2GCC(x, y, z, X0, Y0, Z0, latitude_0, longitude_0):
     '''
-    Convert TCC with origin at a point P into GCC. The point P has GCC
-    coordinates (X_P, Y_P, Z_P) and also the coordinates latitude_P and
-    longitude_P. This TCS has axis x pointing to north, axis z pointing to the
-    inward normal and axis y completing the right-handed system. If latitude_P
+    Convert TCC with origin at a point Q into GCC. The point Q has GCC
+    coordinates (X0, Y0, Z0) and also the coordinates latitude_0 and
+    longitude_0. This TCS has axis x pointing to north, axis z pointing to the
+    inward normal and axis y completing the right-handed system. If latitude_0
     is defined in the GGS, then the computed normal is defined with respect to
-    the referrence elipsoid. If latitude_P is defined in the GSS, then the
+    the referrence elipsoid. If latitude_0 is defined in the GSS, then the
     normal is defined with respect to a sphere. The transformation is computed
     as follows:
 
-    X = vX*x + wX*y - uX*z + X_P
-    Y = vY*x + wY*y - uY*z + Y_P
-    Z = vZ*x        - uZ*z + Z_P
+    X = vX*x + wX*y - uX*z + X0
+    Y = vY*x + wY*y - uY*z + Y0
+    Z = vZ*x        - uZ*z + Z0
 
     where uX, uY, uZ, vX, vY, vZ, wX, and wy are components of the unit vectors
     (referred to the GCS) pointing to the orthogonal directions of the GGS at
-    the point P, (X_P, Y_P, Z_P) are the coordinates of the origin in the GCS
-    and X, Y and Z are the coordinates of the points in the GCS.
+    the point Q.
 
     Parameters:
     -----------
     x, y, z: numpy arrays 1D
         Vectors containing the coordinates x, y and z (in meters), respectively,
         of the points referred to the TCS.
-    X_P, Y_P, Z_P: floats
+    X0, Y0, Z0: floats
         Coordinates of the TGCS origin in the GCS.
-    latitude_P: float
-        Latitude (in degrees) of the origin P.
-    longitude_P: float
-        Longitude (in degrees) of the origin P.
+    latitude_0: float
+        Latitude (in degrees) of the origin Q.
+    longitude_0: float
+        Longitude (in degrees) of the origin Q.
 
     Returns:
     --------
@@ -375,22 +373,22 @@ def TCC2GCC(x, y, z, X_P, Y_P, Z_P, latitude_P, longitude_P):
     z = np.asarray(z)
 
     assert (x.size == y.size == z.size), 'x, y and z must have the same size'
-    assert np.isscalar(X_P), 'X_P must be a scalar'
-    assert np.isscalar(Y_P), 'Y_P must be a scalar'
-    assert np.isscalar(Z_P), 'Z_P must be a scalar'
-    assert np.isscalar(latitude_P), 'latitude_P must be a scalar'
-    assert np.isscalar(longitude_P), 'longitude_P must be a scalar'
+    assert np.isscalar(X0), 'X0 must be a scalar'
+    assert np.isscalar(Y0), 'Y0 must be a scalar'
+    assert np.isscalar(Z0), 'Z0 must be a scalar'
+    assert np.isscalar(latitude_0), 'latitude_0 must be a scalar'
+    assert np.isscalar(longitude_0), 'longitude_0 must be a scalar'
 
     # Unit vectors pointing to the orthogonal directions of the
-    # Geocentric Geodetic System at the origin P
-    uX, uY, uZ = unit_vector_normal(latitude_P, longitude_P)
-    vX, vY, vZ = unit_vector_latitude(latitude_P, longitude_P)
-    wX, wY = unit_vector_longitude(longitude_P)
+    # Geocentric Geodetic System at the origin Q
+    uX, uY, uZ = unit_vector_normal(latitude_0, longitude_0)
+    vX, vY, vZ = unit_vector_latitude(latitude_0, longitude_0)
+    wX, wY = unit_vector_longitude(longitude_0)
 
     # Coordinates in the GCS
-    X = vX*x + wX*y - uX*z + X_P
-    Y = vY*x + wY*y - uY*z + Y_P
-    Z = vZ*x        - uZ*z + Z_P
+    X = vX*x + wX*y - uX*z + X0
+    Y = vY*x + wY*y - uY*z + Y0
+    Z = vZ*x        - uZ*z + Z0
 
     return X, Y, Z
 
@@ -448,7 +446,7 @@ def GCC2GSC(X, Y, Z):
     Transform GCC into GSC. For each point, the tranformation is given by:
 
     radius = sqrt(X**2 + Y**2 + Z**2)
-    latitude = arccos(sqrt(X**2 + Y**2)/sqrt(X**2 + Y**2 + Z**2))
+    latitude = arcsin(Z/sqrt(X**2 + Y**2 + Z**2))
     longitude = arctan(Y/X)
 
     Parameters:
