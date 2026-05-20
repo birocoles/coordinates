@@ -95,3 +95,21 @@ def SAD69_GRS80():
     dz = -38.22
 
     return dx, dy, dz
+
+
+def SAD69_WGS84():
+    '''
+    Transformation parameters from local geodetic system
+    SAD69 to WGS84.
+
+    output
+    dx: float - origin translation along the x-axis (in meters).
+    dy: float - origin translation along the y-axis (in meters).
+    dz: float - origin translation along the z-axis (in meters).
+    '''
+
+    dx = -60.
+    dy = -2.
+    dz = -41.
+
+    return dx, dy, dz
