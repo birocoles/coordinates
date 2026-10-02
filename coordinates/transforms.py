@@ -71,6 +71,34 @@ def squared_first_eccentricity(datum='WGS84'):
     return e2
 
 
+def check_points(obj):
+    '''
+    Verify if 'obj' is a 2D numpy array of floats with 3 columns.
+
+    parameters
+    ----------
+    obj : Python object to be verified
+
+    returns
+    -------
+    P : numpy array 2D
+        The numpy array representing a finite set of points.
+        If 'obj' cannot be converted to a 2D numpy array of floats,
+        then the function raises a ValueError.
+    '''
+
+    try:
+        P = np.asarray(obj, dtype=float)
+    except:
+        raise ValueError("object must be convertible to numpy array")
+    if P.ndim != 2:
+        raise ValueError("object must be a 2D numpy array")
+    if P.shape[1] != 3:
+        raise ValueError("object must have 3 columns")
+
+    return P
+
+
 def prime_vertical_curv(geodetic_latitude, datum):
     '''
     Compute the prime vertical radius of curvature given by
@@ -104,6 +132,9 @@ def prime_vertical_curv(geodetic_latitude, datum):
     if lat.ndim != 1:
         raise ValueError("geodetic_latitude must be a 1D numpy array")
 
+    # Get the datum parameters
+    a, f = elipsoid(datum=datum)
+
     # squared first eccentricity
     e2 = squared_first_eccentricity(datum=datum)
 
@@ -117,7 +148,7 @@ def prime_vertical_curv(geodetic_latitude, datum):
 
 
 
-def GG2GC(poits, datum):
+def GG2GC(points, datum):
     '''
     Transform GG into GC according to:
 
@@ -140,14 +171,7 @@ def GG2GC(poits, datum):
         the GC coordinates X, Y and Z, in meters.
     '''
 
-    try:
-        P = np.asarray(points, dtype=float)
-    except:
-        raise ValueError("points must be convertible to numpy array")
-    if P.ndim != 2:
-        raise ValueError("points must be a 2D numpy array")
-    if P.shape[1] != 3:
-        raise ValueError("points must have 3 columns")
+    P = check_points(points)
 
     # squared first eccentricity
     e2 = squared_first_eccentricity(datum=datum)
@@ -174,7 +198,7 @@ def GG2GC(poits, datum):
     return np.vstack([X, Y, Z]).T
 
 
-def GC2GG(pontos, datum, itmax=5):
+def GC2GG(points, datum, itmax=5):
     '''
     Transform GC coordinates into GG coordinates using the Hirvonen-Moritz algorithm
     (Hofmann-Wellenhof and Moritz, 2005, p. 193).
@@ -198,18 +222,15 @@ def GC2GG(pontos, datum, itmax=5):
         the GG coordinates altitude (in meters), latitude (in degrees) and longitude (in degrees).
     '''
 
-    try:
-        P = np.asarray(points, dtype=float)
-    except:
-        raise ValueError("points must be convertible to numpy array")
-    if P.ndim != 2:
-        raise ValueError("points must be a 2D numpy array")
-    if P.shape[1] != 3:
-        raise ValueError("points must have 3 columns")
+    P = check_points(points)
     if isinstance(itmax, int) is False:
         raise ValueError("itmax must be an integer")
     if itmax <= 0:
         raise ValueError("itmax must be positive")
+
+    # Get the datum parameters
+    a, f = elipsoid(datum=datum)
+    b = a * (1.0 - f) # minor semiaxis
 
     # squared first eccentricity
     e2 = squared_first_eccentricity(datum=datum)
@@ -258,47 +279,38 @@ def GC2GG(pontos, datum, itmax=5):
     return np.vstack([h, latitude, longitude]).T
 
 
-def vector_normal_unitario(pontos):
+def normal_unit_vector(points):
     '''
-    Calcula os elementos do vetor unitário u que aponta na direção normal 
-    para fora. Se 'pontos' contém CGG, então o vetor u é normal ao elipsoide
-    de referência. Se 'pontos' contém CEG, então o vetor u é normal a esfera.
-
-    Em cada ponto (cada linha da matriz 'pontos'), as componentes de u são 
-    dadas por:
+    Compute the elements of the normal unit vector that points outward. 
+    If 'points' contains GG coordinates, then the computed vector is normal 
+    to the reference elipsoid. If 'points' contains GE coordinates, then the 
+    computed vector is normal to the sphere that passes at the computation 
+    points.
+    
+    At each point (each row of 'points'), the vector elements are given by:
 
         | cos(lat)*cos(lon) |
     u = | cos(lat)*sin(lon) | .
         | sin(lat)          |
 
-    entrada
-    -------
-    pontos : numpy array 2D
-        Matriz que contém CGG ou CEG. Se 'pontos' contém CGG, então sua 
-        primeira, segunda e terceira colunas contém, respectivamente, 
-        altitude geométrica (em metros), latitude geodésica (em graus) 
-        e longitude (em graus). Se 'pontos' contém CEG, então sua 
-        primeira, segunda e terceira colunas contém, respectivamente, 
-        distância radial (em metros), latitude geocêntrica (em graus) 
-        e longitude (em graus).
+    parameters
+    ----------
+    points : numpy array 2D
+        Matrix with first, second and third columns formed, respectively, by 
+        the (i) GG coordinates altitude (in meters), geodetic latitude (in degrees) 
+        and longitude (in degrees) or (ii) GE coordinates radial distance (in meters), 
+        geocentric latitude (in degrees) and longitude (in degrees).
 
-    saída
-    -----
-    vetor_u: numpy array 2D
-        Matriz com primeira, segunda e terceira colunas formada pelas 
-        componentes Cartesianas geocêntricas uX, uY e uZ do vetor unitário
-        u em cada ponto (linha da matriz 'pontos').
+    returns
+    -------
+    vector_u: numpy array 2D
+        Matrix with first, second and third columns formed by the Cartesian components
+        uX, uY and uZ along the X, Y and Z axes of the Geocentric Cartesian Coordinate
+        System at each point (each line of 'points').
 
     '''
     
-    try:
-        P = np.asarray(pontos, dtype=float)
-    except:
-        raise ValueError("pontos deve ser compatível com numpy array")
-    if P.ndim != 2:
-        raise ValueError("pontos deve ser um numpy array 2D")
-    if P.shape[1] != 3:
-        raise ValueError("pontos deve ter três colunas")
+    P = check_points(points)
 
     # seno/cosseno da latitude/longitude
     cos_lat = np.cos(np.deg2rad(P[:,1]))
