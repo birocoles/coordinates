@@ -1,7 +1,12 @@
 # Coordinates
 
-A collection of algorithms for transforming coordinates commonly used in
-Geophysics.
+A collection of algorithms to manipulate coordinates commonly used in
+Geophysics. They are:
+
+* Gencentric Cartesian (GC) Coordinates
+* Geocentric Spherical (GS) Coordinates
+* Geocentric Geodetic (GG) Coordinates
+* Topocentric Cartesian (TC) Coordinates
 
 #### References
 
