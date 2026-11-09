@@ -45,9 +45,10 @@ def SAD69():
 
     return a, f
 
-def Hayford1924():
+def Corrego_Alegre():
     '''
     This function returns the following parameters defining the
+    reference elipsoid of Córrego Alegre datum - 
     International (Hayford's) reference elipsoid of 1924:
     a = semimajor axis [m]
     f = flattening
@@ -111,5 +112,23 @@ def SAD69_WGS84():
     dx = -60.
     dy = -2.
     dz = -41.
+
+    return dx, dy, dz
+
+
+def Corrego_Alegre_WGS84():
+    '''
+    Transformation parameters from local geodetic system
+    Corrego Alegre to WGS84.
+
+    output
+    dx: float - origin translation along the x-axis (in meters).
+    dy: float - origin translation along the y-axis (in meters).
+    dz: float - origin translation along the z-axis (in meters).
+    '''
+
+    dx = -206.05
+    dy = 168.28
+    dz = -3.82
 
     return dx, dy, dz
